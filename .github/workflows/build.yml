@@ -3,8 +3,8 @@ name: Sonic Docker Image CI/CD Pipeline
 on:
   workflow_dispatch:
   # 推送主线编译
-  # push:
-  #   branches: [ main ]
+  push:
+    branches: [ main ]
 
   # schedule:
   #   - cron: '0 3 * * *' # 每天构建一次（可选）

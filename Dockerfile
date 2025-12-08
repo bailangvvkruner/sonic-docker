@@ -64,8 +64,8 @@ RUN set -eux \
 
 
 # 运行时阶段 - 使用busybox:musl（极小的基础镜像，包含基本shell）
-# FROM busybox:musl
-FROM scratch AS prod
+FROM busybox:musl AS prod
+# FROM scratch AS prod
 
 # # 构建参数：必须与构建阶段相同，使用相同的变量名
 # ARG FILENAME

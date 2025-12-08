@@ -3,7 +3,8 @@
 
 # 构建阶段 - 使用完整的构建环境
 # FROM golang:1.21-alpine AS builder
-FROM golang:alpine AS builder
+FROM golang:1.21-alpine AS builder
+# FROM golang:alpine AS builder
 
 # # 构建参数：指定生成的二进制文件名
 # ARG FILENAME=sonic
@@ -65,7 +66,7 @@ RUN set -eux \
 
 # 运行时阶段 - 使用busybox:musl（极小的基础镜像，包含基本shell）
 # FROM busybox:musl
-FROM scratch
+FROM scratch AS prod
 
 # # 构建参数：必须与构建阶段相同，使用相同的变量名
 # ARG FILENAME
@@ -74,7 +75,7 @@ FROM scratch
 # COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 # 复制经过strip优化的sonic二进制文件（无论构建时的文件名是什么，运行时都使用/sonic）
-COPY --from=builder /app/sonic /sonic
+COPY --from=builder /app/ /app/
 
 # 创建非root用户（增强安全性）
 # RUN adduser -D -u 1000 sonic

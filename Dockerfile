@@ -9,7 +9,7 @@ FROM golang:1.21-alpine AS builder
 # # 构建参数：指定生成的二进制文件名
 # ARG FILENAME=sonic
 
-WORKDIR /app
+WORKDIR /build
 
 # 安装构建依赖（包括C++编译器和strip工具）
 # 使用--no-scripts禁用触发器执行，避免busybox触发器在arm64架构下的兼容性问题
@@ -56,9 +56,8 @@ RUN set -eux \
     # # 清理构建依赖
     # && apk del --purge .build-deps \
     # && rm -rf /var/cache/apk/*
-    && mkdir -p /app/conf \
-    && mkdir -p /app/resources \
-    # && cp sonic /app/ \
+    && mkdir -p /app \
+    && cp $FILENAME /app/ \
     && cp -r conf /app/ \
     && cp -r resources /app/ \
     && cp scripts/docker_init.sh /app/

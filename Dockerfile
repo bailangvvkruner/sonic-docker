@@ -3,7 +3,7 @@ FROM golang:alpine AS builder
 RUN apk --no-cache add git ca-certificates gcc g++
 
 # COPY . /go/src/github.com/go-sonic/sonic/
-git clone --depth 1 https://github.com/go-sonic/sonic/ /go/src/github.com/go-sonic/sonic/
+RUN git clone --depth 1 https://github.com/go-sonic/sonic/ /go/src/github.com/go-sonic
 WORKDIR /go/src/github.com/go-sonic/sonic
 
 ARG BUILD_COMMIT

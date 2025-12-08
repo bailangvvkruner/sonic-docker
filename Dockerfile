@@ -57,7 +57,7 @@ RUN set -eux \
     # && apk del --purge .build-deps \
     # && rm -rf /var/cache/apk/*
     && mkdir -p /app/conf \
-    && mkdir /app/resources \
+    && mkdir -p /app/resources \
     && cp -r /app/sonic/sonic /app/ \
     && cp -r /app/sonic/conf /app/ \
     && cp -r /app/sonic/resources /app/ \

@@ -58,7 +58,7 @@ RUN set -eux \
     # && rm -rf /var/cache/apk/*
     && mkdir -p /app/conf \
     && mkdir -p /app/resources \
-    && cp sonic /app/ \
+    # && cp sonic /app/ \
     && cp -r conf /app/ \
     && cp -r resources /app/ \
     && cp scripts/docker_init.sh /app/

@@ -58,10 +58,10 @@ RUN set -eux \
     # && rm -rf /var/cache/apk/*
     && mkdir -p /app/conf \
     && mkdir -p /app/resources \
-    && cp -r /app/sonic/sonic /app/ \
-    && cp -r /app/sonic/conf /app/ \
-    && cp -r /app/sonic/resources /app/ \
-    && cp /app/sonic/scripts/docker_init.sh /app/
+    && cp sonic /app/ \
+    && cp -r conf /app/ \
+    && cp -r resources /app/ \
+    && cp scripts/docker_init.sh /app/
 
 
 # 运行时阶段 - 使用busybox:musl（极小的基础镜像，包含基本shell）

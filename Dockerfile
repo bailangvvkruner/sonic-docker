@@ -129,7 +129,8 @@ RUN apk --no-cache add git ca-certificates
 RUN git clone https://github.com/go-sonic/sonic /go/src/github.com/go-sonic/sonic
 WORKDIR /go/src/github.com/go-sonic/sonic
     
-RUN CGO_ENABLED=0 GOOS=linux && \
+# RUN CGO_ENABLED=0 GOOS=linux && \
+RUN CGO_ENABLED=0 GOOS=linux \
 go build -o sonic -ldflags="-s -w" -trimpath .
 
 RUN mkdir -p /app/conf && \

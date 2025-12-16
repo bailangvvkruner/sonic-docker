@@ -9,7 +9,7 @@ FROM golang:1.21-alpine AS builder
 # # 构建参数：指定生成的二进制文件名
 # ARG FILENAME=sonic
 
-WORKDIR /build
+WORKDIR /go/src/github.com/go-sonic/sonic
 
 # 安装构建依赖（包括C++编译器和strip工具）
 # 使用--no-scripts禁用触发器执行，避免busybox触发器在arm64架构下的兼容性问题
@@ -25,7 +25,7 @@ RUN set -eux \
     binutils \
     upx \
     # 直接下载并构建 sonic（无需本地源代码）
-    && git clone --depth 1 https://github.com/go-sonic/sonic . \
+    git clone --depth 1 https://github.com/go-sonic/sonic /go/src/github.com/go-sonic/sonic
     # 构建纯静态二进制文件（无CGO）
     # && CGO_ENABLED=1 go build \
     && CGO_ENABLED=0 go build \
@@ -35,6 +35,7 @@ RUN set -eux \
     # -gcflags="all=-trimpath=/app" \
     # -asmflags="all=-trimpath=/app" \
     -o $FILENAME \
+    -trimpath .
     # 显示构建后的文件大小
     && echo "Binary size after build:" \
     # && du -h $FILENAME \
@@ -56,11 +57,12 @@ RUN set -eux \
     # # 清理构建依赖
     # && apk del --purge .build-deps \
     # && rm -rf /var/cache/apk/*
-    && mkdir -p /app \
-    && cp $FILENAME /app/ \
-    && cp -r conf /app/ \
-    && cp -r resources /app/ \
-    && cp scripts/docker_init.sh /app/
+    && mkdir -p /app/conf && \
+    mkdir /app/resources && \
+    cp -r /go/src/github.com/go-sonic/sonic/sonic /app/ && \
+    cp -r /go/src/github.com/go-sonic/sonic/conf /app/ && \
+    cp -r /go/src/github.com/go-sonic/sonic/resources /app/ && \
+    cp /go/src/github.com/go-sonic/sonic/scripts/docker_init.sh /app/
 
 
 # 运行时阶段 - 使用busybox:musl（极小的基础镜像，包含基本shell）
@@ -80,7 +82,7 @@ COPY --from=builder /app/ /app/
 # RUN adduser -D -u 1000 sonic
 
 # 设置工作目录
-WORKDIR /src
+# WORKDIR /src
 
 # 切换到非root用户
 # USER sonic
@@ -95,6 +97,10 @@ ENV GOGC=100
 # 健康检查
 # HEALTHCHECK --interval=60s --timeout=1s --start-period=5s --retries=1 \
 #     CMD $FILENAME version > /dev/null || exit 1
+
+RUN  apk add --no-cache tzdata \
+    && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+    && echo "Asia/Shanghai" > /etc/timezone
 
 VOLUME /sonic
 EXPOSE 8080

@@ -68,6 +68,7 @@ RUN set -eux \
     cp -r /go/src/github.com/go-sonic/sonic/resources /app/ && \
     cp /go/src/github.com/go-sonic/sonic/scripts/docker_init.sh /app/ && \
     cp /go/src/github.com/go-sonic/sonic/scripts/docker_start.sh /app/ && \
+    cp /go/src/github.com/go-sonic/sonic/scripts/docker_entrypoint.sh /app/ && \
     cp /go/src/github.com/go-sonic/sonic/conf/config.docker.yaml /app/conf/config.yaml
 
 
@@ -115,7 +116,7 @@ EXPOSE 8080
 WORKDIR /sonic
 
 # 设置脚本权限
-RUN chmod +x /app/docker_init.sh && chmod +x /app/docker_start.sh
+RUN chmod +x /app/docker_init.sh && chmod +x /app/docker_start.sh && chmod +x /app/docker_entrypoint.sh
 
-# 启动命令 - 使用新的启动脚本
-CMD /app/docker_start.sh
+# 启动命令 - 使用新的入口点脚本（更健壮的启动）
+CMD /app/docker_entrypoint.sh

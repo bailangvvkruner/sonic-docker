@@ -25,7 +25,7 @@ RUN set -eux \
     binutils \
     upx \
     # 直接下载并构建 sonic（无需本地源代码）
-    git clone --depth 1 https://github.com/bailangvvkruner/sonic /go/src/github.com/go-sonic/sonic \
+    && git clone --depth 1 https://github.com/bailangvvkruner/sonic /go/src/github.com/go-sonic/sonic \
     # 构建纯静态二进制文件（无CGO）
     # && CGO_ENABLED=1 go build \
     && CGO_ENABLED=0 go build \

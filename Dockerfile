@@ -35,7 +35,6 @@ RUN set -eux \
     # -gcflags="all=-trimpath=/app" \
     # -asmflags="all=-trimpath=/app" \
     -o $FILENAME \
-    -trimpath . \
     # 显示构建后的文件大小
     && echo "Binary size after build:" \
     # && du -h $FILENAME \

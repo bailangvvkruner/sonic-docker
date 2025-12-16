@@ -26,6 +26,9 @@ RUN set -eux \
     upx \
     # 直接下载并构建 sonic（无需本地源代码）
     && git clone --depth 1 https://github.com/bailangvvkruner/sonic /go/src/github.com/go-sonic/sonic \
+    # 更新依赖以兼容最新Go版本
+    && cd /go/src/github.com/go-sonic/sonic \
+    && go get -u golang.org/x/tools \
     # 构建纯静态二进制文件（无CGO）
     # && CGO_ENABLED=1 go build \
     && CGO_ENABLED=0 go build \

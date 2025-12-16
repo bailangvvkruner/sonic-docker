@@ -98,9 +98,9 @@ ENV GOGC=100
 # HEALTHCHECK --interval=60s --timeout=1s --start-period=5s --retries=1 \
 #     CMD $FILENAME version > /dev/null || exit 1
 
-RUN  apk add --no-cache tzdata \
-    && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
-    && echo "Asia/Shanghai" > /etc/timezone
+# RUN  apk add --no-cache tzdata \
+#     && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+#     && echo "Asia/Shanghai" > /etc/timezone
 
 VOLUME /sonic
 EXPOSE 8080

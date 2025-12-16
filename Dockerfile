@@ -112,4 +112,9 @@ VOLUME /sonic
 EXPOSE 8080
 
 WORKDIR /sonic
-CMD /app/docker_init.sh && /app/sonic -config /sonic/conf/config.yaml 2>&1
+
+# 初始化脚本
+RUN chmod +x /app/docker_init.sh
+
+# 启动命令 - 先执行初始化，然后在前台运行sonic
+CMD /app/docker_init.sh && cd /sonic && exec /app/sonic -config /sonic/conf/config.yaml 2>&1

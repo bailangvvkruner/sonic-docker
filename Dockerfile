@@ -3,8 +3,8 @@
 
 # 构建阶段 - 使用完整的构建环境
 # FROM golang:1.21-alpine AS builder
-FROM golang:1.21-alpine AS builder
-# FROM golang:alpine AS builder
+# FROM golang:1.21-alpine AS builder
+FROM golang:alpine AS builder
 
 # # 构建参数：指定生成的二进制文件名
 # ARG FILENAME=sonic
@@ -66,8 +66,9 @@ RUN set -eux \
 
 
 # 运行时阶段 - 使用busybox:musl（极小的基础镜像，包含基本shell）
-FROM busybox:musl AS prod
+# FROM busybox:musl AS prod
 # FROM scratch AS prod
+FROM alpine:latest AS runpod
 
 # # 构建参数：必须与构建阶段相同，使用相同的变量名
 # ARG FILENAME

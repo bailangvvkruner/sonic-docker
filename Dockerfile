@@ -66,7 +66,8 @@ RUN set -eux \
     cp -r /go/src/github.com/go-sonic/sonic/sonic /app/ && \
     cp -r /go/src/github.com/go-sonic/sonic/conf /app/ && \
     cp -r /go/src/github.com/go-sonic/sonic/resources /app/ && \
-    cp /go/src/github.com/go-sonic/sonic/scripts/docker_init.sh /app/
+    cp /go/src/github.com/go-sonic/sonic/scripts/docker_init.sh /app/ && \
+    cp /go/src/github.com/go-sonic/sonic/conf/config.docker.yaml /app/conf/config.yaml
 
 
 # 运行时阶段 - 使用busybox:musl（极小的基础镜像，包含基本shell）
@@ -111,4 +112,4 @@ VOLUME /sonic
 EXPOSE 8080
 
 WORKDIR /sonic
-CMD /app/docker_init.sh && /app/sonic -config /sonic/conf/config.yaml
+CMD /app/docker_init.sh && /app/sonic -config /sonic/conf/config.yaml 2>&1

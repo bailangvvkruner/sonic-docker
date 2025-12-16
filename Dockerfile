@@ -16,8 +16,8 @@ WORKDIR /go/src/github.com/go-sonic/sonic
 RUN set -eux \
     && FILENAME=sonic \
     && apk add --no-cache --no-scripts --virtual .build-deps \
-    gcc \
-    g++ \
+    # gcc \
+    # g++ \
     musl-dev \
     git \
     build-base \

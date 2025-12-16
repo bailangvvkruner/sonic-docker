@@ -122,15 +122,14 @@
 # CMD /app/docker_entrypoint.sh
 
 FROM golang:1.19.3-alpine as builder
-RUN apk --no-cache add git ca-certificates
+RUN apk --no-cache add git ca-certificates gcc g++
 
 # RUN git clone --depth 1 https://github.com/go-sonic/sonic /go/src/github.com/go-sonic/sonic
 # 全量clone吧 害怕{"status":500,"message":"Internal Server Error","data":null}
 RUN git clone https://github.com/go-sonic/sonic /go/src/github.com/go-sonic/sonic
 WORKDIR /go/src/github.com/go-sonic/sonic
     
-# RUN CGO_ENABLED=0 GOOS=linux && \
-RUN CGO_ENABLED=0 GOOS=linux \
+RUN CGO_ENABLED=1 GOOS=linux && \
 go build -o sonic -ldflags="-s -w" -trimpath .
 
 RUN mkdir -p /app/conf && \
@@ -139,7 +138,6 @@ RUN mkdir -p /app/conf && \
     cp -r /go/src/github.com/go-sonic/sonic/conf /app/ && \
     cp -r /go/src/github.com/go-sonic/sonic/resources /app/ && \
     cp /go/src/github.com/go-sonic/sonic/scripts/docker_init.sh /app/
-
 
 
 

@@ -16,11 +16,12 @@ RUN set -eux \
     tzdata \
     \
     && git clone -b master --recursive --depth 1 https://github.com/bailangvvkruner/sonic . \
-    && go mod download \
-    && go list -m -u all \
+    # # 列出可更新的模块（仅信息显示）
+    # && go list -m -u all \
+    # 直接更新并获取所有依赖到最新版本
     && go get -u ./... \
-    && go get github.com/golang-jwt/jwt/v5@latest \
-    && go get github.com/disintegration/imaging@latest \
+    # && go get github.com/golang-jwt/jwt/v5@latest \
+    # && go get github.com/disintegration/imaging@latest \
     && CGO_ENABLED=1 GOOS=linux \
         go build \
         -o sonic \

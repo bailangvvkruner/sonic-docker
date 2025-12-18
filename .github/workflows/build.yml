@@ -156,10 +156,23 @@ jobs:
         with:
           languages: go
           queries: security-extended,security-and-quality
+          # 禁用自动构建，我们将手动构建
+          build-mode: manual
 
-      - name: Autobuild
+      - name: Setup Go for CodeQL analysis
         if: github.event_name != 'pull_request'
-        uses: github/codeql-action/autobuild@v4
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache-dependency-path: '**/go.sum'
+
+      - name: Build Go code for CodeQL analysis
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "Building Go code for CodeQL analysis..."
+          cd /go/src/github.com/go-sonic/sonic || true
+          go build -o /tmp/sonic-codeql ./...
+          echo "CodeQL build completed"
 
       - name: Perform CodeQL Analysis
         if: github.event_name != 'pull_request'

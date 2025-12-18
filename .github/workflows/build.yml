@@ -15,6 +15,8 @@ permissions:
   packages: write  # 推送镜像到GitHub Container Registry所需权限
   security-events: write
   actions: read
+  # 为安全扫描添加额外权限
+  id-token: write  # OIDC令牌，用于容器注册表认证
 
 env:
   DOCKER_REPO: bailangvvking/sonic
@@ -25,7 +27,7 @@ jobs:
   build-and-push:
     name: Build and Push Docker Image
     runs-on:
-      # ubuntu-latest
+      # ubuntu-cache
       - self-hosted
       - linux
       - x64
@@ -48,7 +50,9 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          # context: .
+          # 调整dockerfile
+          file: ./scripts/Dockerfile
           platforms: |
               linux/amd64
           push: true
@@ -56,6 +60,8 @@ jobs:
             ${{ env.DOCKER_REPO }}:${{ env.IMAGE_TAG }}
           # 禁用缓存，确保每次构建都是全新的
           cache: false
+          # 完全禁用所有构建缓存
+          no-cache: true
 
       - name: Output image info
         run: |
@@ -70,9 +76,10 @@ jobs:
           image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
           format: 'sarif'
           output: 'trivy-results.sarif'
-          # 禁用缓存以减少存储使用
-          skip-db-update: false  # 可以设置为true跳过数据库更新，但会影响扫描准确性
-          skip-java-db-update: false
+          # 完全禁用所有缓存
+          skip-db-update: true   # 跳过数据库更新，禁用缓存
+          skip-java-db-update: true  # 跳过Java数据库更新，禁用缓存
+          no-cache: true  # 禁用Trivy缓存
 
       - name: Upload Trivy scan results
         if: github.event_name != 'pull_request' && github.event_name != 'schedule'
@@ -80,3 +87,165 @@ jobs:
         with:
           sarif_file: 'trivy-results.sarif'
           category: 'container-vulnerability-scan'
+
+      # 扫描Go模块依赖漏洞
+      - name: Scan Go dependencies for vulnerabilities
+        if: github.event_name != 'pull_request'
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-fs-results.sarif'
+          skip-db-update: true
+          skip-java-db-update: true
+          no-cache: true
+
+      - name: Upload Trivy FS scan results
+        if: github.event_name != 'pull_request' && github.event_name != 'schedule'
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: 'trivy-fs-results.sarif'
+          category: 'dependency-vulnerability-scan'
+
+      # 扫描Dockerfile配置漏洞
+      - name: Scan Dockerfile for vulnerabilities
+        if: github.event_name != 'pull_request'
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-config-results.sarif'
+          skip-db-update: true
+          skip-java-db-update: true
+          no-cache: true
+
+      - name: Upload Trivy config scan results
+        if: github.event_name != 'pull_request' && github.event_name != 'schedule'
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: 'trivy-config-results.sarif'
+          category: 'config-vulnerability-scan'
+
+      # 生成SBOM（软件物料清单）
+      - name: Generate SBOM for container image
+        if: github.event_name != 'pull_request'
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:cache
+          format: 'cyclonedx'
+          output: 'sbom-cyclonedx.json'
+          skip-db-update: true
+          skip-java-db-update: true
+          no-cache: true
+
+      - name: Upload SBOM
+        if: github.event_name != 'pull_request' && github.event_name != 'schedule'
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: 'sbom-cyclonedx.json'
+          category: 'sbom'
+
+      # 使用CodeQL进行静态代码分析
+      - name: Initialize CodeQL
+        if: github.event_name != 'pull_request'
+        uses: github/codeql-action/init@v4
+        with:
+          languages: go
+          queries: security-extended,security-and-quality
+
+      - name: Autobuild
+        if: github.event_name != 'pull_request'
+        uses: github/codeql-action/autobuild@v4
+
+      - name: Perform CodeQL Analysis
+        if: github.event_name != 'pull_request'
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: '/language:go'
+
+      # 敏感信息扫描
+      - name: Scan for secrets and sensitive information
+        if: github.event_name != 'pull_request'
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          extra_args: --no-update --json
+        env:
+          TRUFFLEHOG_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 使用gitleaks进行更全面的敏感信息扫描
+      - name: Scan for hardcoded secrets
+        if: github.event_name != 'pull_request'
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          config-path: .gitleaks.toml
+          redact: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+      # 创建.gitleaks.toml配置文件（如果没有）
+      - name: Create gitleaks config if missing
+        if: github.event_name != 'pull_request'
+        run: |
+          if [ ! -f .gitleaks.toml ]; then
+            cat > .gitleaks.toml << 'EOF'
+          title = "gitleaks config"
+
+          [allowlist]
+          description = "Allowlist certain strings"
+          files = ['''^\.git''', '''go\.sum''', '''go\.mod''', '''\.md$''']
+
+          [[rules]]
+          description = "Generic API Key"
+          regex = '''(?i)(apikey|api_key|secret|token|password|passwd|pwd)[=:]\s*['\"]?[a-zA-Z0-9]{10,}['\"]?'''
+
+          [[rules]]
+          description = "AWS Access Key ID"
+          regex = '''(A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16}'''
+
+          [[rules]]
+          description = "AWS Secret Access Key"
+          regex = '''(?i)aws_secret_access_key.*=.*['\"]?[A-Za-z0-9/+=]{40}['\"]?'''
+
+          [[rules]]
+          description = "GitHub Token"
+          regex = '''(?i)github.*['\"]?[0-9a-zA-Z]{35,40}['\"]?'''
+
+          [[rules]]
+          description = "Generic Secret"
+          regex = '''(?i)secret.*['\"]?[0-9a-zA-Z]{32,45}['\"]?'''
+          EOF
+          fi
+
+      # 运行Go安全扫描器gosec
+      - name: Run Go security scanner (gosec)
+        if: github.event_name != 'pull_request'
+        run: |
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+          gosec -fmt sarif -out gosec-results.sarif ./...
+
+      - name: Upload gosec scan results
+        if: github.event_name != 'pull_request' && github.event_name != 'schedule'
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: 'gosec-results.sarif'
+          category: 'go-security-scan'
+
+      # 运行Go语言lint检查
+      - name: Run Go linter
+        if: github.event_name != 'pull_request'
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./... > vulncheck-results.txt 2>&1 || true
+          cat vulncheck-results.txt
+
+      - name: Upload Go vulnerability check results
+        if: github.event_name != 'pull_request' && github.event_name != 'schedule'
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-vulnerability-check
+          path: vulncheck-results.txt
+          retention-days: 30

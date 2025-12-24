@@ -22,6 +22,10 @@ RUN set -eux \
     && go get -u ./... \
     # && go get github.com/golang-jwt/jwt/v5@latest \
     # && go get github.com/disintegration/imaging@latest \
+    # Cgo编译优化
+    && export CGO_CFLAGS="-flto=auto -pipe" \
+    && export CGO_CXXFLAGS="-flto=auto -pipe" \
+    && export MAKEFLAGS="-j$(nproc)" \
     && CGO_ENABLED=1 GOOS=linux \
         go build \
         -o sonic \

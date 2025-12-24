@@ -3,7 +3,7 @@ name: Sonic Docker Image CI/CD Pipeline
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [ sqlite3 ]
   # schedule:
   #   - cron: '0 3 * * *' # 每天构建一次（可选）
   # schedule:
@@ -21,7 +21,7 @@ permissions:
 env:
   DOCKER_REPO: bailangvvking/sonic
   IMAGE_NAME: sonic
-  IMAGE_TAG: latest
+  IMAGE_TAG: sqlite3
 
 jobs:
   build-and-push:
@@ -80,7 +80,7 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:sqlite3
           format: 'sarif'
           output: 'trivy-results.sarif'
           # 完全禁用所有缓存

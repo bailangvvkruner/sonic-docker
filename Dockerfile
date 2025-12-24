@@ -15,7 +15,7 @@ RUN set -eux \
     upx \
     tzdata \
     \
-    && git clone -b master --recursive --depth 1 https://github.com/bailangvvkruner/sonic . \
+    && git clone -b sqlite3 --recursive --depth 1 https://github.com/bailangvvkruner/sonic . \
     # # 列出可更新的模块（仅信息显示）
     # && go list -m -u all \
     # 直接更新并获取所有依赖到最新版本

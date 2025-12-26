@@ -23,6 +23,11 @@ env:
   IMAGE_NAME: sonic
   IMAGE_TAG: latest
 
+# 在 workflow 文件顶部添加 多个工作流同时编译
+concurrency:
+  group: build-and-push-${{ github.ref }}
+  cancel-in-progress: false  # 改为 false，允许并发
+
 jobs:
   build-and-push:
     name: Build and Push Docker Image
@@ -55,13 +60,26 @@ jobs:
           # file: ./scripts/Dockerfile
           file: |
             ./Dockerfile
+          # platforms: |
+          #     linux/amd64
+          #     linux/386
+          #     linux/arm64
+          #     linux/arm/v7
+          #     linux/arm/v6
+          #     linux/arm/v5
+          #     linux/riscv64
+          #     linux/ppc64le
+          #     linux/mips64le
+          #     linux/s390x
           platforms: |
-               linux/amd64
-               linux/arm64
-               linux/386
-               linux/arm/v7
-               linux/arm/v6
-               linux/ppc64le
+              linux/386
+              linux/amd64
+              linux/arm/v6
+              linux/arm/v7
+              linux/arm64/v8
+              linux/ppc64le
+              linux/riscv64
+              linux/s390x
           push: true
           tags: |
             ${{ env.DOCKER_REPO }}:${{ env.IMAGE_TAG }}

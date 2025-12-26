@@ -5,15 +5,21 @@ FROM golang:alpine as builder
 WORKDIR /go/src/github.com/go-sonic/sonic
 
 RUN set -eux \
+    && FILENAME=sonic \
     && apk add --no-cache --no-scripts --virtual .build-deps \
     git \
     ca-certificates \
-    gcc \
-    g++ \
+    build-base \
+    # gcc \
+    # g++ \
     # 包含strip命令
     binutils \
-    upx \
+    # upx \
     tzdata \
+    \
+    # 尝试安装 upx，如果不可用则继续（某些架构可能不支持）
+    && apk add --no-cache --no-scripts --virtual .upx-deps \
+        upx 2>/dev/null || echo "upx not available, skipping compression" \
     \
     && git clone -b master --recursive --depth 1 https://github.com/bailangvvkruner/sonic . \
     # # 列出可更新的模块（仅信息显示）
@@ -28,24 +34,29 @@ RUN set -eux \
     && export MAKEFLAGS="-j$(nproc)" \
     && CGO_ENABLED=1 GOOS=linux \
         go build \
-        -o sonic \
+        -o $FILENAME \
         -ldflags="-s -w -extldflags -static" \
         -trimpath . \
     && echo "Binary size after build:" \
-    && du -b sonic \
-    && strip --strip-all sonic \
+    && du -b $FILENAME \
+    && strip --strip-all $FILENAME \
     && echo "Binary size after stripping:" \
-    && du -b sonic \
-    && upx --best --lzma sonic \
+    && du -b $FILENAME \
+    # && upx --best --lzma $FILENAME \
+    && (upx --best --lzma $FILENAME 2>/dev/null || echo "upx compression skipped") \
     && echo "Binary size after upx:" \
-    && du -b sonic \
+    && du -b $FILENAME \
     && mkdir -p /app/conf \
     && mkdir /app/resources \
     && cp -r /go/src/github.com/go-sonic/sonic/sonic /app/ \
     && cp -r /go/src/github.com/go-sonic/sonic/conf /app/ \
     && cp -r /go/src/github.com/go-sonic/sonic/resources /app/ \
-    && cp /go/src/github.com/go-sonic/sonic/scripts/docker_init.sh /app/
-
+    && cp /go/src/github.com/go-sonic/sonic/scripts/docker_init.sh /app/ \
+    # 清理Go缓存和临时文件以释放空间
+    && go clean -modcache \
+    && go clean -cache \
+    && rm -rf /tmp/go-build* \
+    && rm -rf /root/.cache/go-build
 
 FROM alpine:latest as prod
 # FROM busybox:musl as prod
